@@ -1,16 +1,37 @@
-# React + Vite
+# 0414_condition-checker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+오늘의 컨디션을 빠르게 체크할 수 있는 웹앱입니다.
 
-Currently, two official plugins are available:
+## 기능
+- 수면 / 에너지 / 기분 / 집중력 / 스트레스 슬라이더 입력
+- 100점 기준 컨디션 점수 계산
+- 오늘 상태에 맞는 해석 제공
+- 추천 모드 / 추천 리셋 팁 표시
+- 한국어 UI
+- GitHub Pages 배포 지원
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 사용 방법
+1. 각 항목의 슬라이더를 움직입니다.
+2. 현재 컨디션 점수를 확인합니다.
+3. 오늘 추천 모드와 리셋 팁을 참고합니다.
 
-## React Compiler
+## 기술 스택
+- React
+- Vite
+- CSS
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 개발
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+## 빌드
+```bash
+npm run build
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## GitHub Pages
+배포 주소:
+
+<https://qutechoi.github.io/0414_condition-checker/>
