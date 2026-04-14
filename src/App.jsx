@@ -5,158 +5,322 @@ const metrics = [
   {
     key: 'sleep',
     label: '수면',
-    hint: '어제 잠을 얼마나 잘 잤는지',
-    emoji: '😴',
+    shortLabel: 'Sleep',
+    hint: '어젯밤, 몸이 얼마나 깊게 쉬었는지 떠올려봐.',
+    question: '어제 잠은 어땠어?',
+    emoji: '🌙',
+    gradient: 'metric-sleep',
+    accent: '#8b5cf6',
+    deco: '별빛이 잔잔하게 남아 있는 밤의 결',
+    options: ['거의 못 잤어', '깊고 편하게 잤어'],
+    tags: ['회복', '숙면', '리듬'],
   },
   {
     key: 'energy',
     label: '에너지',
-    hint: '지금 몸에 힘이 얼마나 있는지',
-    emoji: '⚡️',
+    shortLabel: 'Energy',
+    hint: '지금 몸 안에 남아 있는 추진력을 체크해봐.',
+    question: '지금 몸에 힘이 얼마나 남아 있어?',
+    emoji: '⚡',
+    gradient: 'metric-energy',
+    accent: '#06b6d4',
+    deco: '스파크가 번지는 전류의 결',
+    options: ['축 처져 있어', '꽤 생생해'],
+    tags: ['추진력', '활력', '페이스'],
   },
   {
     key: 'mood',
     label: '기분',
-    hint: '오늘 기분이 어떤지',
-    emoji: '🙂',
+    shortLabel: 'Mood',
+    hint: '오늘 마음의 온도가 어느 쪽에 가까운지 골라줘.',
+    question: '오늘 기분은 어떤 쪽에 가까워?',
+    emoji: '🌤️',
+    gradient: 'metric-mood',
+    accent: '#f59e0b',
+    deco: '아침빛이 부드럽게 번지는 색감',
+    options: ['가라앉아 있어', '맑고 가벼워'],
+    tags: ['감정', '분위기', '톤'],
   },
   {
     key: 'focus',
     label: '집중력',
-    hint: '집중이 잘 되는 상태인지',
-    emoji: '🧠',
+    shortLabel: 'Focus',
+    hint: '생각이 한 점으로 모이는 정도를 느껴봐.',
+    question: '집중은 얼마나 잘 잡히는 상태야?',
+    emoji: '🎯',
+    gradient: 'metric-focus',
+    accent: '#22c55e',
+    deco: '초점이 또렷해지는 유리 표면',
+    options: ['계속 흐트러져', '꽤 또렷해'],
+    tags: ['몰입', '선명함', '정리'],
   },
   {
     key: 'stress',
     label: '스트레스',
-    hint: '높을수록 더 지친 상태야',
-    emoji: '🫠',
+    shortLabel: 'Stress',
+    hint: '몸과 마음을 누르는 압박의 강도를 떠올려봐.',
+    question: '지금 스트레스는 어느 정도야?',
+    emoji: '🌊',
+    gradient: 'metric-stress',
+    accent: '#fb7185',
+    deco: '파도가 부딪히는 장력의 패턴',
+    options: ['평온한 편이야', '많이 눌리고 있어'],
+    tags: ['압박', '긴장', '과부하'],
     reverse: true,
   },
 ]
 
-const quickActions = [
-  {
-    title: '오늘 추천 모드',
-    getText: (score) => {
-      if (score >= 85) return '집중 작업, 중요한 결정, 어려운 일 처리하기 좋은 날이야.'
-      if (score >= 65) return '핵심 업무 1~2개를 잡고 밀기 좋은 상태야.'
-      if (score >= 45) return '가벼운 업무, 정리, 짧은 할 일 위주가 좋아.'
-      return '회복 모드. 오늘은 무리하지 않는 게 이득이야.'
-    },
-  },
-  {
-    title: '추천 리셋',
-    getText: (score) => {
-      if (score >= 85) return '좋은 흐름이니 짧은 휴식만 챙기면서 달리면 돼.'
-      if (score >= 65) return '물 한 잔, 짧은 산책, 그리고 제일 중요한 일부터 시작해.'
-      if (score >= 45) return '카페인, 자리 정리, 할 일 축소가 꽤 도움 된다.'
-      return '수분, 음식, 햇빛, 휴식. 오늘은 죄책감 없이 회복 우선.'
-    },
-  },
-]
+const defaultValues = {
+  sleep: 7,
+  energy: 6,
+  mood: 6,
+  focus: 6,
+  stress: 4,
+}
 
-function getConditionLabel(score) {
-  if (score >= 85) return { label: '최상 컨디션', color: 'peak' }
-  if (score >= 65) return { label: '꽤 괜찮음', color: 'good' }
-  if (score >= 45) return { label: '그럭저럭', color: 'mid' }
-  return { label: '회복 필요', color: 'low' }
+function getCondition(score) {
+  if (score >= 85) return { label: '오늘 꽤 좋음', tone: 'peak' }
+  if (score >= 70) return { label: '안정적으로 괜찮음', tone: 'good' }
+  if (score >= 55) return { label: '무난하지만 관리 필요', tone: 'mid' }
+  return { label: '회복 우선 모드', tone: 'low' }
+}
+
+function getInterpretation(score, values) {
+  const strongest = [...metrics]
+    .map((metric) => ({
+      ...metric,
+      value: metric.reverse ? 11 - values[metric.key] : values[metric.key],
+      raw: values[metric.key],
+    }))
+    .sort((a, b) => b.value - a.value)[0]
+
+  const weakest = [...metrics]
+    .map((metric) => ({
+      ...metric,
+      value: metric.reverse ? 11 - values[metric.key] : values[metric.key],
+      raw: values[metric.key],
+    }))
+    .sort((a, b) => a.value - b.value)[0]
+
+  if (score >= 85) {
+    return {
+      title: '좋은 흐름이 잡힌 날',
+      summary: '전체 밸런스가 좋다. 중요한 결정이나 집중 작업을 앞으로 당겨도 괜찮아 보여.',
+      action: '가장 중요한 일 1개를 먼저 끝내고, 중간중간 짧은 휴식으로 흐름만 유지해.',
+      caution: '페이스가 좋다고 일정을 과하게 넣으면 후반에 갑자기 꺼질 수 있어.',
+      strongest,
+      weakest,
+    }
+  }
+
+  if (score >= 70) {
+    return {
+      title: '안정적인 실전 컨디션',
+      summary: '전체적으로 괜찮다. 무리만 안 하면 오늘 해야 할 일은 꽤 잘 풀릴 가능성이 높아.',
+      action: '핵심 업무 1~2개에 힘을 주고, 나머지는 가볍게 정리하는 식이 좋아.',
+      caution: `${weakest.label} 쪽이 발목을 잡을 수 있으니 초반에 한 번 보정해두면 좋아.`,
+      strongest,
+      weakest,
+    }
+  }
+
+  if (score >= 55) {
+    return {
+      title: '기능은 하지만 배려가 필요한 날',
+      summary: '완전히 나쁘진 않지만, 에너지를 분산해서 쓰면 생각보다 빨리 지칠 수 있어.',
+      action: '할 일을 잘게 쪼개고, 빠르게 끝낼 수 있는 것부터 리듬을 만드는 게 좋아.',
+      caution: `${weakest.label} 지표가 낮아서 억지로 몰아붙이면 체감 피로가 커질 수 있어.`,
+      strongest,
+      weakest,
+    }
+  }
+
+  return {
+    title: '회복을 우선해야 하는 날',
+    summary: '오늘은 성과보다 복구가 중요해 보여. 억지로 밀면 효율보다 소모가 더 커질 수 있어.',
+    action: '일정을 줄이고, 물, 식사, 햇빛, 짧은 낮잠 같은 기본 회복 행동부터 챙겨.',
+    caution: `${weakest.label} 신호가 강하게 떨어져 있어. 오늘은 스스로를 덜 몰아붙이는 게 맞아.`,
+    strongest,
+    weakest,
+  }
+}
+
+function getScore(values) {
+  const total = metrics.reduce((sum, metric) => {
+    const raw = values[metric.key]
+    const normalized = metric.reverse ? 11 - raw : raw
+    return sum + normalized
+  }, 0)
+
+  return Math.round((total / (metrics.length * 10)) * 100)
 }
 
 function App() {
-  const [values, setValues] = useState({
-    sleep: 7,
-    energy: 6,
-    mood: 6,
-    focus: 6,
-    stress: 4,
-  })
+  const [step, setStep] = useState(0)
+  const [values, setValues] = useState(defaultValues)
 
-  const score = useMemo(() => {
-    const total = metrics.reduce((sum, metric) => {
-      const raw = values[metric.key]
-      const normalized = metric.reverse ? 11 - raw : raw
-      return sum + normalized
-    }, 0)
-    return Math.round((total / (metrics.length * 10)) * 100)
-  }, [values])
+  const score = useMemo(() => getScore(values), [values])
+  const condition = useMemo(() => getCondition(score), [score])
+  const interpretation = useMemo(() => getInterpretation(score, values), [score, values])
 
-  const condition = getConditionLabel(score)
+  const currentMetric = metrics[step]
+  const isComplete = step >= metrics.length
+  const progress = Math.round((Math.min(step, metrics.length) / metrics.length) * 100)
+
+  const handleChange = (value) => {
+    setValues((prev) => ({
+      ...prev,
+      [currentMetric.key]: Number(value),
+    }))
+  }
+
+  const handleNext = () => {
+    setStep((prev) => Math.min(prev + 1, metrics.length))
+  }
+
+  const handleBack = () => {
+    setStep((prev) => Math.max(prev - 1, 0))
+  }
+
+  const handleRestart = () => {
+    setValues(defaultValues)
+    setStep(0)
+  }
 
   return (
     <main className="page-shell">
-      <section className="hero-card">
-        <div className="hero-copy">
-          <span className="eyebrow">0414 Daily Tool</span>
-          <h1>오늘의 컨디션 체크기</h1>
-          <p>
-            수면, 에너지, 기분, 집중력, 스트레스를 빠르게 체크해서
-            오늘 내 상태를 점수로 보고, 어떤 하루를 보내면 좋을지 가볍게 판단하는 웹앱이야.
-          </p>
-        </div>
-
-        <div className="score-card">
-          <div className={`score-orb ${condition.color}`}>
-            <strong>{score}</strong>
-            <span>/ 100</span>
+      <section className="frame-card">
+        <header className="topbar">
+          <div>
+            <span className="eyebrow">0414 Condition Checker</span>
+            <h1>오늘의 컨디션 체크</h1>
           </div>
-          <div className={`condition-chip ${condition.color}`}>{condition.label}</div>
-        </div>
-      </section>
+          <div className="progress-cluster">
+            <span className="progress-copy">{isComplete ? '분석 완료' : `${step + 1} / ${metrics.length}`}</span>
+            <div className="progress-track" aria-hidden="true">
+              <span style={{ width: `${isComplete ? 100 : progress}%` }} />
+            </div>
+          </div>
+        </header>
 
-      <section className="app-grid">
-        <section className="panel form-panel">
-          <h2>상태 체크</h2>
-          <div className="metric-list">
-            {metrics.map((metric) => (
-              <label key={metric.key} className="metric-row">
-                <div className="metric-head">
-                  <div>
-                    <strong>
-                      <span className="emoji">{metric.emoji}</span> {metric.label}
-                    </strong>
-                    <p>{metric.hint}</p>
-                  </div>
-                  <span className="metric-value">{values[metric.key]}/10</span>
+        {!isComplete ? (
+          <section className={`question-card ${currentMetric.gradient}`}>
+            <div className="question-meta">
+              <div className="metric-badge-row">
+                <span className="metric-badge">{currentMetric.shortLabel}</span>
+                <div className="metric-tags">
+                  {currentMetric.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
                 </div>
+              </div>
+              <p className="metric-deco">{currentMetric.deco}</p>
+            </div>
+
+            <div className="question-main">
+              <div className="question-copy">
+                <span className="question-emoji">{currentMetric.emoji}</span>
+                <h2>{currentMetric.question}</h2>
+                <p>{currentMetric.hint}</p>
+              </div>
+
+              <div className="slider-panel">
+                <div className="value-showcase" style={{ '--accent': currentMetric.accent }}>
+                  <strong>{values[currentMetric.key]}</strong>
+                  <span>/ 10</span>
+                </div>
+
                 <input
                   type="range"
                   min="1"
                   max="10"
-                  value={values[metric.key]}
-                  onChange={(event) =>
-                    setValues((prev) => ({
-                      ...prev,
-                      [metric.key]: Number(event.target.value),
-                    }))
-                  }
+                  value={values[currentMetric.key]}
+                  onChange={(event) => handleChange(event.target.value)}
+                  style={{ '--accent': currentMetric.accent }}
                 />
-              </label>
-            ))}
-          </div>
-        </section>
 
-        <section className="panel result-panel">
-          <h2>오늘의 해석</h2>
-          <div className="insight-grid">
-            {quickActions.map((item) => (
-              <article key={item.title} className="insight-card">
-                <h3>{item.title}</h3>
-                <p>{item.getText(score)}</p>
+                <div className="range-labels">
+                  <span>{currentMetric.options[0]}</span>
+                  <span>{currentMetric.options[1]}</span>
+                </div>
+              </div>
+            </div>
+
+            <footer className="question-actions">
+              <button type="button" className="ghost-button" onClick={handleBack} disabled={step === 0}>
+                이전
+              </button>
+              <button type="button" className="primary-button" onClick={handleNext}>
+                {step === metrics.length - 1 ? '해석 보기' : '다음 질문'}
+              </button>
+            </footer>
+          </section>
+        ) : (
+          <section className="result-card">
+            <div className="result-hero">
+              <div>
+                <span className={`result-pill ${condition.tone}`}>{condition.label}</span>
+                <h2>{interpretation.title}</h2>
+                <p>{interpretation.summary}</p>
+              </div>
+              <div className={`score-orb ${condition.tone}`}>
+                <strong>{score}</strong>
+                <span>오늘의 점수</span>
+              </div>
+            </div>
+
+            <div className="result-grid">
+              <article className="result-panel highlight-panel">
+                <span className="panel-kicker">Best signal</span>
+                <h3>
+                  {interpretation.strongest.emoji} {interpretation.strongest.label}
+                </h3>
+                <p>
+                  오늘 가장 받쳐주는 축이야. 지금 점수는 <strong>{interpretation.strongest.raw}/10</strong>.
+                </p>
               </article>
-            ))}
-          </div>
 
-          <article className="summary-card">
-            <h3>한줄 분석</h3>
-            <p>
-              {score >= 85 && '오늘은 꽤 좋은 날이야. 중요한 일 먼저 처리하면 효율이 잘 나올 가능성이 높아.'}
-              {score >= 65 && score < 85 && '무난하게 괜찮은 컨디션이야. 욕심만 조금 줄이면 안정적으로 잘 굴러갈 수 있어.'}
-              {score >= 45 && score < 65 && '기능은 하지만 최상은 아니야. 작은 단위로 끊어서 하는 게 훨씬 좋아.'}
-              {score < 45 && '몸이나 머리가 쉬고 싶어 하는 상태야. 오늘은 회복 중심으로 가는 게 맞아.'}
-            </p>
-          </article>
-        </section>
+              <article className="result-panel soft-panel">
+                <span className="panel-kicker">Watch closely</span>
+                <h3>
+                  {interpretation.weakest.emoji} {interpretation.weakest.label}
+                </h3>
+                <p>
+                  여기가 오늘의 병목일 가능성이 커. 지금 점수는 <strong>{interpretation.weakest.raw}/10</strong>.
+                </p>
+              </article>
+
+              <article className="result-panel action-panel">
+                <span className="panel-kicker">오늘의 추천</span>
+                <h3>이렇게 가면 좋아</h3>
+                <p>{interpretation.action}</p>
+              </article>
+
+              <article className="result-panel caution-panel">
+                <span className="panel-kicker">주의 포인트</span>
+                <h3>무리만 피하자</h3>
+                <p>{interpretation.caution}</p>
+              </article>
+            </div>
+
+            <div className="metric-summary-list">
+              {metrics.map((metric) => (
+                <div key={metric.key} className="mini-metric">
+                  <span>
+                    {metric.emoji} {metric.label}
+                  </span>
+                  <strong>{values[metric.key]}</strong>
+                </div>
+              ))}
+            </div>
+
+            <footer className="question-actions result-actions">
+              <button type="button" className="ghost-button" onClick={handleRestart}>
+                처음부터 다시
+              </button>
+            </footer>
+          </section>
+        )}
       </section>
     </main>
   )
